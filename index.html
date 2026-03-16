@@ -22,12 +22,6 @@ font-size:26px;
 margin-bottom:10px;
 }
 
-#leave{
-font-size:22px;
-color:#00ffff;
-margin-bottom:20px;
-}
-
 table{
 width:100%;
 border-collapse:collapse;
@@ -57,6 +51,33 @@ color:#00ffff;
 color:white;
 }
 
+/* スクロール案内 */
+
+.ticker{
+position:fixed;
+bottom:0;
+left:0;
+width:100%;
+background:black;
+color:#00ffff;
+overflow:hidden;
+white-space:nowrap;
+font-size:22px;
+border-top:2px solid #ff9900;
+padding:8px 0;
+}
+
+.ticker span{
+display:inline-block;
+padding-left:100%;
+animation:scroll 25s linear infinite;
+}
+
+@keyframes scroll{
+0%{transform:translateX(0);}
+100%{transform:translateX(-100%);}
+}
+
 </style>
 
 </head>
@@ -66,7 +87,6 @@ color:white;
 <h1>笠幡駅 発車案内</h1>
 
 <div id="datetime"></div>
-<div id="leave"></div>
 
 <table>
 
@@ -75,6 +95,7 @@ color:white;
 <th>時刻</th>
 <th>行先</th>
 <th>あと</th>
+<th>下校目安</th>
 <th>案内</th>
 </tr>
 </thead>
@@ -84,11 +105,41 @@ color:white;
 
 </table>
 
+<div class="ticker">
+<span id="info"></span>
+</div>
+
 <script>
 
 const WALK = 20
 const FAST = 15
 const DASH = 10
+
+// スクロール案内
+
+const messages = [
+"下校時間帯は笠幡駅の混雑が見込まれます。時間に余裕のある方は混雑緩和のため、電車の分散乗車にご協力お願い致します。",
+"駆け込み乗車は列車の安全運行が損なわれる大変危険な行為です。絶対にお辞めください。",
+"この案内板は自然科学部の制作です。ウェブサイト化しているのでスマートフォンでもご覧になれます。URLは https://akira3586gtr-svg.github.io/train_board/",
+"電車内での携帯電話の使用マナーにご協力お願い致します。",
+"電車の時刻は2026年3月現在(ダイヤ改正後)のものです。また時刻表はサイト制作者が手入力で入れているため、電車の時刻に間違いがある可能性がございます。間違いを発見した場合、お手数ですが自然科学部までご連絡お願い致します。",
+"[広告]自然科学部は化学実験からロボット製作、プログラミングなど幅広い活動をしている部活です！ご興味のある方はぜひ活動日(火、金曜日)の2階地学実験室にお越しください！"
+]
+
+let msg_index = 0
+
+function changeMessage(){
+const info = document.getElementById("info")
+
+info.innerText = messages[msg_index]
+
+msg_index = (msg_index + 1) %
+messages.length
+}
+
+
+    
+
 
 // 平日ダイヤ
 const weekday_trains = [
@@ -114,6 +165,8 @@ const weekday_trains = [
 [24*60+25,"高麗川"]
 ]
 
+// 休日ダイヤ（省略せずそのまま元コード）
+
 // 休日ダイヤ
 const holiday_trains = [
 
@@ -138,7 +191,8 @@ const holiday_trains = [
 [23*60+14,"川越"],[23*60+41,"高麗川"],[23*60+50,"川越"],
 [24*60+25,"高麗川"]
 
-]
+] 
+
 
 function judge(diff){
 if(diff >= WALK) return "余裕があります"
@@ -159,8 +213,11 @@ let h=now.getHours()
 let m=now.getMinutes()
 let s=now.getSeconds()
 
+const weekday = ["日","月","火","水","木","金","土"]
+let w = weekday[now.getDay()]
+
 document.getElementById("datetime").innerText =
-`${Y}/${M}/${D} ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
+`${Y}/${M}/${D}(${w}) ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
 
 let now_time = h*60+m
 
@@ -168,7 +225,6 @@ let trains = (now.getDay()==0 || now.getDay()==6) ? holiday_trains : weekday_tra
 
 let html=""
 let count=0
-let leave_text=""
 
 for(let t of trains){
 
@@ -179,19 +235,16 @@ if(t[0]>=now_time){
 let th=Math.floor(t[0]/60)
 let tm=t[0]%60
 
-if(count==0){
 let leave = t[0] - WALK
 let lh = Math.floor(leave/60)
 let lm = leave%60
-
-leave_text = `学校を出る目安 ${String(lh).padStart(2,'0')}:${String(lm).padStart(2,'0')}`
-}
 
 html += `
 <tr>
 <td>${String(th).padStart(2,'0')}:${String(tm).padStart(2,'0')}</td>
 <td class="dest">${t[1]}</td>
 <td class="remain">${diff}分</td>
+<td>${String(lh).padStart(2,'0')}:${String(lm).padStart(2,'0')}</td>
 <td class="status">${judge(diff)}</td>
 </tr>
 `
@@ -203,13 +256,19 @@ if(count==5) break
 }
 
 document.getElementById("board").innerHTML = html
-document.getElementById("leave").innerText = leave_text
 
 }
 
 update()
 setInterval(update,1000)
 
+const ticker =
+document.getElementById("info")
+
+ticker.addEventListener("animationiteration" , () => {
+changeMessage()})
+
+changeMessage()
 </script>
 
 </body>
