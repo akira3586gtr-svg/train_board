@@ -316,6 +316,19 @@ let leave = t[0] - WALK
 let lh = Math.floor(leave/60)
 let lm = leave%60
 
+const isMobile = window.innerWidth <= 600
+
+if(isMobile){
+html += `
+<tr>
+<td>${String(th).padStart(2,'0')}:${String(tm).padStart(2,'0')}発</td>
+<td class="dest">${t[1]}</td>
+<td class="remain">あと ${diff}分</td>
+<td>下校目安 ${String(lh).padStart(2,'0')}:${String(lm).padStart(2,'0')}</td>
+<td class="status">${judge(diff)}</td>
+</tr>
+`
+}else{
 html += `
 <tr>
 <td>${String(th).padStart(2,'0')}:${String(tm).padStart(2,'0')}</td>
@@ -325,6 +338,7 @@ html += `
 <td class="status">${judge(diff)}</td>
 </tr>
 `
+}
 
 count++
 if(count==5) break
